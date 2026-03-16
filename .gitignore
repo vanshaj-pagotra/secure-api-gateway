@@ -1,0 +1,33 @@
+# Virtual Environment (never commit this - it's huge and machine-specific)
+venv/
+env/
+.venv/
+
+# Secrets (NEVER commit this - it contains your passwords and keys)
+.env
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python packaging artifacts
+*.egg-info/
+dist/
+build/
+
+# Database files
+*.db
+*.sqlite3
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs (if you write any local log files)
+*.log
