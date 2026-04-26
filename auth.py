@@ -2,6 +2,7 @@ import os
 import jwt
 import datetime
 from passlib.context import CryptContext
+from fastapi import HTTPException, Header, Depends
 from database import get_db_connection
 from dotenv import load_dotenv
 
@@ -38,6 +39,38 @@ def create_access_token(username: str, role: str):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token
+
+def decode_token(token: str) -> dict:
+    """
+    Core JWT decoding - single source of truth for the entire gateway.
+    Called by both verify_token (Depends) and the security middleware.
+    """
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def verify_token(authorization: str = Header(None)) -> dict:
+    """
+    FastAPI dependancy: extracts and validates Bearer taken from Authorization header.
+    Use with Depends() on any route that requires authentication.
+    """
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid format: Use: Bearer <token>")
+    return decode_token(authorization.split(" ")[1])
+
+def require_admin(payload: dict = Depends(verify_token)) -> dict:
+    """
+    FastAPI dependancy: extends verify_token, by enforcing Admin role.
+    Use with Depends() on admin-only routes.
+    """
+    if payload.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return payload
 
 def authenticate_user(username: str, password: str):
     """

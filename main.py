@@ -1,15 +1,20 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import json
+import os
 
-from auth import authenticate_user, create_access_token
+from auth import authenticate_user, create_access_token, decode_token, require_admin, verify_token
 from waf import inspect_request, inspect_json_body
 from rate_limiter import is_rate_limited
 from logger import log_event
 from proxy import forward_request
+from database import get_db_connection
 
 app = FastAPI(title="Secure API Gateway")
+
+# Load public paths once at startup
+PUBLIC_PATHS = [p.strip() for p in os.getenv("PUBLIC_PATHS", "/,/login").split(",")]
 
 # --- MIDDLEWARE ---
 
@@ -17,7 +22,7 @@ app = FastAPI(title="Secure API Gateway")
 async def security_middleware(request: Request, call_next):
     """
     Runs on EVERY request before it reaches any route.
-    Checks: rate limit > WAF (URL) > WAF (body)
+    Checks: rate limit > WAF (URL) > WAF (body) > JWT auth
     """
     client_ip = request.client.host
 
@@ -57,6 +62,16 @@ async def security_middleware(request: Request, call_next):
                 status_code = 400,
                 content = {"detail": "Invalid JSON body"}
             )
+
+    # 4. JWT Authentication - enforce for all non-public routes
+    if request.url.path not in PUBLIC_PATHS:
+        auth = request.headers.get("authorization", "")
+        if not auth or not auth.startswith("Bearer "):
+            return JSONResponse(status_code=401, content={"detail": "Authorization required"})
+        try:
+            decode_token(auth.split(" ")[1])
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
 
     # All checks passed - forward to route handler
     response = await call_next(request)
