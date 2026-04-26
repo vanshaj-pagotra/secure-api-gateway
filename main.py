@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel
 import json
 import os
@@ -10,6 +10,9 @@ from rate_limiter import is_rate_limited
 from logger import log_event
 from proxy import forward_request
 from database import get_db_connection
+
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(title="Secure API Gateway")
 
@@ -106,6 +109,42 @@ def login(request: LoginRequest):
         "token_type": "bearer",
         "role": user["role"]
     }
+
+#--- Admin Routes ---
+
+@app.get("/admin/logs")
+def get_security_logs(payload: dict = Depends(require_admin)):
+    """
+    Admin-only: returns the 100 most recent security events from the database.
+    Requires a valid JWT with role='Admin' in the Authorization header.
+    """
+    connection = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id, event_type, source_ip, details, timestamp "
+            "FROM security_logs ORDER BY timestamp DESC LIMIT 100"
+        )
+        logs = cursor.fetchall()
+        for log in logs:
+            if log.get("timestamp"):
+                log["timestamp"] = str(log["timestamp"])
+        return {"total": len(logs), "logs": logs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admin/dashboard", response_class=HTMLResponse)
+def admin_dashboard():
+    """
+    Serves the admin dashboard HTML page.
+    Auth enforced client-side: shows login form if no JWT, fetches /admin/logs if Admin.
+    """
+    with open("templates/dashboard.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
 
 # --- Proxy: forward all other requests to backend ---
 
