@@ -7,6 +7,7 @@ from auth import authenticate_user, create_access_token
 from waf import inspect_request, inspect_json_body
 from rate_limiter import is_rate_limited
 from logger import log_event
+from proxy import forward_request
 
 app = FastAPI(title="Secure API Gateway")
 
@@ -37,7 +38,7 @@ async def security_middleware(request: Request, call_next):
             content = {"detail": f"Blocked by WAF: {url_check['attack_type']}"}
         )
 
-    # 3. WAF - inspect the request body (POST/PUT only)
+    # 3. WAF - inspect the request body (JSON content-type only)
     content_type = request.headers.get("content-type", "")
     if request.method in ("POST", "PUT", "PATCH") and "application/json" in content_type:
         try:
@@ -90,3 +91,10 @@ def login(request: LoginRequest):
         "token_type": "bearer",
         "role": user["role"]
     }
+
+# --- Proxy: forward all other requests to backend ---
+
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
+async def proxy(request: Request, path: str):
+    """Catch-all: forwards clean requests to the configured backend."""
+    return await forward_request(request)
