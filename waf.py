@@ -55,7 +55,7 @@ def inspect_request(data: str) -> dict:
 def inspect_json_body(body: dict) -> dict:
     """
     Inspects a JSON body for attack patterns.
-    Recursively checks all string values in the JSON object.
+    Recursively checks all values in the JSON object.
     """
     for key, value in body.items():
         if isinstance(value, str):

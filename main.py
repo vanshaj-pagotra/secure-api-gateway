@@ -1,8 +1,68 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import json
+
 from auth import authenticate_user, create_access_token
+from waf import inspect_request, inspect_json_body
+from rate_limiter import is_rate_limited
+from logger import log_event
 
 app = FastAPI(title="Secure API Gateway")
+
+# --- MIDDLEWARE ---
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    """
+    Runs on EVERY request before it reaches any route.
+    Checks: rate limit > WAF (URL) > WAF (body)
+    """
+    client_ip = request.client.host
+
+    # 1. Rate Limiting
+    if is_rate_limited(client_ip):
+        log_event("Rate_Limit", client_ip, "Rate limit exceeded.")
+        return JSONResponse(
+            status_code = 429,
+            content = {"detail": "Too many requests. Slow down."}
+        )
+    
+    # 2. WAF - inspect the URL/path for attack patterns
+    url_check = inspect_request(str(request.url))
+    if url_check["is_malicious"]:
+        log_event("WAF_BLOCK", client_ip, f"{url_check['attack_type']} detected in URL")
+        return JSONResponse(
+            status_code = 400,
+            content = {"detail": f"Blocked by WAF: {url_check['attack_type']}"}
+        )
+
+    # 3. WAF - inspect the request body (POST/PUT only)
+    content_type = request.headers.get("content-type", "")
+    if request.method in ("POST", "PUT", "PATCH") and "application/json" in content_type:
+        try:
+            body_bytes = await request.body()
+            body = json.loads(body_bytes)
+            body_check = inspect_json_body(body)
+            if body_check["is_malicious"]:
+                log_event("WAF_BLOCK", client_ip, f"{body_check['attack_type']} detected in request body")
+                return JSONResponse(
+                    status_code=400,
+                    content = {"detail": f"Blocked by WAF: {body_check['attack_type']}"}
+                )
+        except json.JSONDecodeError:
+            log_event("WAF_BLOCK", client_ip, "Malformed JSON body")
+            return JSONResponse(
+                status_code = 400,
+                content = {"detail": "Invalid JSON body"}
+            )
+
+    # All checks passed - forward to route handler
+    response = await call_next(request)
+    return response
+
+
+# --- Routes ---
 
 # This defines the shape of the login request body
 class LoginRequest(BaseModel):
