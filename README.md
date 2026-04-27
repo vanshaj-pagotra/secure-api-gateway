@@ -50,6 +50,8 @@ DB_NAME=secure_gateway_db
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 
+BACKEND_URL=http://localhost:5000
+
 RATE_LIMIT_MAX_REQUESTS=10
 RATE_LIMIT_WINDOW_SECONDS=60
 ```

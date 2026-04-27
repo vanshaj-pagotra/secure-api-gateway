@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 import os
 
-from auth import authenticate_user, create_access_token, decode_token, require_admin, verify_token
+from auth import authenticate_user, create_access_token, decode_token, require_admin
 from waf import inspect_request, inspect_json_body
 from rate_limiter import is_rate_limited
 from logger import log_event
@@ -16,6 +17,7 @@ load_dotenv()
 
 app = FastAPI(title="Secure API Gateway")
 
+
 # Load public paths once at startup
 PUBLIC_PATHS = [p.strip() for p in os.getenv("PUBLIC_PATHS", "/,/login").split(",")]
 
@@ -25,17 +27,22 @@ PUBLIC_PATHS = [p.strip() for p in os.getenv("PUBLIC_PATHS", "/,/login").split("
 async def security_middleware(request: Request, call_next):
     """
     Runs on EVERY request before it reaches any route.
-    Checks: rate limit > WAF (URL) > WAF (body) > JWT auth
+    Checks: rate limit > WAF (URL) > WAF (body) > JWT auth > RBAC (admin paths)
     """
+    # Pass CORS preflight requests directly through — CORSMiddleware handles these
+    if request.method == "OPTIONS":
+        return await call_next(request)
+        
     client_ip = request.client.host
 
-    # 1. Rate Limiting
-    if is_rate_limited(client_ip):
-        log_event("Rate_Limit", client_ip, "Rate limit exceeded.")
-        return JSONResponse(
-            status_code = 429,
-            content = {"detail": "Too many requests. Slow down."}
-        )
+    # 1. Rate Limiting — skip admin paths (protected by RBAC; rate limit targets public abuse)
+    if not request.url.path.startswith("/admin/"):
+        if is_rate_limited(client_ip):
+            log_event("Rate_Limit", client_ip, "Rate limit exceeded.")
+            return JSONResponse(
+                status_code = 429,
+                content = {"detail": "Too many requests. Slow down."}
+            )
     
     # 2. WAF - inspect the URL/path for attack patterns
     url_check = inspect_request(str(request.url))
@@ -70,16 +77,29 @@ async def security_middleware(request: Request, call_next):
     if request.url.path not in PUBLIC_PATHS:
         auth = request.headers.get("authorization", "")
         if not auth or not auth.startswith("Bearer "):
+            log_event("Auth_Failure", client_ip, f"Missing/invalid token on {request.url.path}")
             return JSONResponse(status_code=401, content={"detail": "Authorization required"})
         try:
-            decode_token(auth.split(" ")[1])
+            payload = decode_token(auth.split(" ")[1])
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+
+        # 5. RBAC - Admin role required for any /admin/ path
+        if request.url.path.startswith("/admin/") and payload.get("role") != "Admin":
+            return JSONResponse(status_code=403, content={"detail": "Admin access required"})
 
     # All checks passed - forward to route handler
     response = await call_next(request)
     return response
 
+# CORSMiddleware must be added AFTER security_middleware so it wraps
+# everything — including early-return error responses from the middleware.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5002"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Routes ---
 
@@ -94,13 +114,16 @@ def health_check():
     return {"status": "Secure API Gateway is running"}
 
 @app.post("/login")
-def login(request: LoginRequest):
+def login(login_req: LoginRequest, http_request: Request):
     """
     Accepts username and password, verifies credentials,
     and returns a signed JWT token on success.
+    Failed attempts are logged as Failed_Login security events.
     """
-    user = authenticate_user(request.username, request.password)
+    client_ip = http_request.client.host
+    user = authenticate_user(login_req.username, login_req.password)
     if not user:
+        log_event("Failed_Login", client_ip, f"Invalid credentials for username: '{login_req.username}'")
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token(username=user["username"], role=user["role"])

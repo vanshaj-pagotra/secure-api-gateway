@@ -54,7 +54,7 @@ def decode_token(token: str) -> dict:
 
 def verify_token(authorization: str = Header(None)) -> dict:
     """
-    FastAPI dependancy: extracts and validates Bearer taken from Authorization header.
+    FastAPI dependency: extracts and validates Bearer token from Authorization header.
     Use with Depends() on any route that requires authentication.
     """
     if not authorization:

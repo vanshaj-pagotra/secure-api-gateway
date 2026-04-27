@@ -40,10 +40,16 @@ async def forward_request(request: Request) -> Response:
                 follow_redirects = True,
                 timeout = 10.0
             )
+        # Hop-by-hop headers must not be forwarded — Starlette manages these itself
+        HOP_BY_HOP = {"content-length", "transfer-encoding", "connection",
+                       "keep-alive", "upgrade", "proxy-authenticate",
+                       "proxy-authorization", "te", "trailers"}
+        safe_headers = {k: v for k, v in backend_response.headers.items()
+                        if k.lower() not in HOP_BY_HOP}
         return Response(
             content = backend_response.content,
             status_code = backend_response.status_code,
-            headers = dict(backend_response.headers),
+            headers = safe_headers,
             media_type = backend_response.headers.get("content-type")
         )
     except httpx.ConnectError:
