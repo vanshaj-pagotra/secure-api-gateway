@@ -20,3 +20,11 @@ CREATE TABLE IF NOT EXISTS security_logs (
     timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     details TEXT
 );
+
+-- Stores revoked JWT tokens (SHA-256 hash of token + its expiry)
+CREATE TABLE IF NOT EXISTS token_blacklist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

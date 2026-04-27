@@ -1,5 +1,6 @@
 import os
 import jwt
+import hashlib
 import datetime
 from passlib.context import CryptContext
 from fastapi import HTTPException, Header, Depends
@@ -43,14 +44,51 @@ def create_access_token(username: str, role: str):
 def decode_token(token: str) -> dict:
     """
     Core JWT decoding - single source of truth for the entire gateway.
-    Called by both verify_token (Depends) and the security middleware.
+    Validates signature and expiry, then checks the token blacklist.
+    Called by both require_admin (Depends) and the security middleware.
     """
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Check if this token has been explicitly revoked via /logout
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT 1 FROM token_blacklist WHERE token_hash = %s AND expires_at > NOW()",
+            (token_hash,)
+        )
+        if cursor.fetchone():
+            raise HTTPException(status_code=401, detail="Token has been revoked. Please log in again.")
+    finally:
+        cursor.close()
+        conn.close()
+
+    return payload
+
+def blacklist_token(token: str, exp_timestamp: int):
+    """
+    Adds a token to the blacklist (called on logout).
+    Stores a SHA-256 hash of the token alongside its expiry datetime.
+    """
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    expires_at = datetime.datetime.fromtimestamp(exp_timestamp)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT IGNORE INTO token_blacklist (token_hash, expires_at) VALUES (%s, %s)",
+            (token_hash, expires_at)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
 
 def verify_token(authorization: str = Header(None)) -> dict:
     """

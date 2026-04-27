@@ -339,7 +339,16 @@
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    const token = localStorage.getItem('demo_token');
+    if (token) {
+      try {
+        await fetch(`${GATEWAY}/logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (_) {} // still clear local state even if request fails
+    }
     localStorage.removeItem('demo_token');
     localStorage.removeItem('demo_user');
     localStorage.removeItem('demo_role');

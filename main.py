@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import json
 import os
 
-from auth import authenticate_user, create_access_token, decode_token, require_admin
+from auth import authenticate_user, create_access_token, decode_token, require_admin, blacklist_token
 from waf import inspect_request, inspect_json_body
 from rate_limiter import is_rate_limited
 from logger import log_event
@@ -134,6 +134,25 @@ def login(login_req: LoginRequest, http_request: Request):
     }
 
 #--- Admin Routes ---
+
+@app.post("/logout")
+def logout(http_request: Request):
+    """
+    Revokes the current JWT by storing its hash in the token_blacklist table.
+    Even if the token hasn't expired, it will be rejected by decode_token on
+    all subsequent requests (Zero Trust: explicit revocation on sign-out).
+    """
+    auth = http_request.headers.get("authorization", "")
+    token = auth.split(" ")[1] if auth.startswith("Bearer ") else None
+    if token:
+        try:
+            payload = decode_token(token)
+            blacklist_token(token, payload["exp"])
+            log_event("Logout", http_request.client.host, f"User '{payload.get('sub')}' logged out")
+        except Exception:
+            pass  # Token already invalid/expired — no need to blacklist
+    return {"message": "Logged out successfully"}
+
 
 @app.get("/admin/logs")
 def get_security_logs(payload: dict = Depends(require_admin)):
