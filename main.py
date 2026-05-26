@@ -17,6 +17,16 @@ load_dotenv()
 
 app = FastAPI(title="Secure API Gateway")
 
+# CORSMiddleware must be added FIRST (before security_middleware) so it
+# wraps everything — FastAPI applies middleware in reverse-add order,
+# meaning last-added = outermost = runs first on request / last on response.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5002", "http://127.0.0.1:5002"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Load public paths once at startup
 PUBLIC_PATHS = [p.strip() for p in os.getenv("PUBLIC_PATHS", "/,/login").split(",")]
@@ -92,14 +102,7 @@ async def security_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# CORSMiddleware must be added AFTER security_middleware so it wraps
-# everything — including early-return error responses from the middleware.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5002"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # --- Routes ---
 

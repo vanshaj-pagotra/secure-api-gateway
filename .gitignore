@@ -31,3 +31,6 @@ Thumbs.db
 
 # Logs (if you write any local log files)
 *.log
+
+# Example Web Application
+demo_backend/
