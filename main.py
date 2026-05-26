@@ -2,10 +2,11 @@ from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 import json
 import os
 
-from auth import authenticate_user, create_access_token, decode_token, require_admin, blacklist_token
+from auth import authenticate_user, create_access_token, decode_token, require_admin, blacklist_token, cleanup_expired_blacklist
 from waf import inspect_request, inspect_json_body
 from rate_limiter import is_rate_limited
 from logger import log_event
@@ -15,7 +16,12 @@ from database import get_db_connection
 from dotenv import load_dotenv
 load_dotenv()
 
-app = FastAPI(title="Secure API Gateway")
+@asynccontextmanager
+async def lifespan(app):
+    cleanup_expired_blacklist()
+    yield
+
+app = FastAPI(title="Secure API Gateway", lifespan=lifespan)
 
 # CORSMiddleware must be added FIRST (before security_middleware) so it
 # wraps everything — FastAPI applies middleware in reverse-add order,

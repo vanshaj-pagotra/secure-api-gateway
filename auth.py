@@ -128,3 +128,21 @@ def authenticate_user(username: str, password: str):
     finally:
         cursor.close()
         conn.close()
+
+def cleanup_expired_blacklist():
+    """
+    Deletes token blacklist entries whose expiry has already passed.
+    Expiry check before the blacklist is ever consulted.
+    Called once on gateway startup.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM token_blacklist WHERE expires_at <= NOW()")
+        conn.commit()
+        print(f"[STARTUP] Cleaned up {cursor.rowcount} expired blacklist entries.")
+    except Exception as e:
+        print(f"[STARTUP] Blacklist cleanup failed: {e}")
+    finally:
+        cursor.close()
+        conn.close()
