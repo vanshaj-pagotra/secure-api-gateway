@@ -6,7 +6,42 @@ from fastapi.responses import Response
 
 load_dotenv()
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5000")
+def _load_routes():
+    """
+    Parse ROUTES from .env into a sorted list of (prefix, backend_url) tuples.
+    Longest prefix first so the most specific route always wins.
+    Falls back to BACKEND_URL if ROUTES is not set (single-backend mode).
+    """
+    routes_env = os.getenv("ROUTES", "").strip()
+    if routes_env:
+        routes = []
+        for entry in routes_env.split(","):
+            entry = entry.strip()
+            if "|" not in entry:
+                continue
+            prefix, backend_url = entry.split("|", 1)
+            routes.append((prefix.strip(), backend_url.strip()))
+        routes.sort(key=lambda r: len(r[0]), reverse=True)
+        return routes
+
+    # Single-backend fallback
+    backend_url = os.getenv("BACKEND_URL")
+    if not backend_url:
+        raise ValueError("No routes configured, Set ROUTES or BACKEND_URL in your .env file.")
+    return [("/", backend_url)]
+    
+ROUTES = _load_routes()
+
+def _match_route(path: str) -> str:
+    """
+    Find the correct backend URL for a given request path.
+    Returns the backend URL of the longest matching prefix.
+    Returns None if no route matches.
+    """
+    for prefix, backend_url in ROUTES:
+        if path.startswith(prefix):
+            return backend_url
+    return None
 
 async def forward_request(request: Request) -> Response:
     """
@@ -17,7 +52,16 @@ async def forward_request(request: Request) -> Response:
     # Build the full target URL
     path = request.url.path
     query = request.url.query
-    target_url = f"{BACKEND_URL}{path}"
+
+    backend_url = _match_route(path)
+    if backend_url is None:
+        return Response(
+            content=b'{"detail": "No route configured for this path"}',
+            status_code=404,
+            media_type="application/json"
+        )
+
+    target_url = f"{backend_url}{path}"
     if query:
         target_url += f"?{query}"
 

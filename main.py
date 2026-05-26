@@ -20,9 +20,10 @@ app = FastAPI(title="Secure API Gateway")
 # CORSMiddleware must be added FIRST (before security_middleware) so it
 # wraps everything — FastAPI applies middleware in reverse-add order,
 # meaning last-added = outermost = runs first on request / last on response.
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5002", "http://127.0.0.1:5002"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
