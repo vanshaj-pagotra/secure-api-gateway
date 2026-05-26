@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sentinel API Gateway — Admin Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -29,7 +34,7 @@
       border-radius: 16px;
       padding: 48px 40px;
       width: 380px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.10);
     }
 
     .login-card .logo {
@@ -39,7 +44,9 @@
       margin-bottom: 6px;
     }
 
-    .login-card .logo span { color: #1a202c; }
+    .login-card .logo span {
+      color: #1a202c;
+    }
 
     .login-card .subtitle {
       color: #64748b;
@@ -66,7 +73,9 @@
       margin-bottom: 18px;
     }
 
-    .login-card input:focus { border-color: #2563eb; }
+    .login-card input:focus {
+      border-color: #2563eb;
+    }
 
     .login-card button {
       width: 100%;
@@ -81,7 +90,9 @@
       transition: background 0.2s;
     }
 
-    .login-card button:hover { background: #1d4ed8; }
+    .login-card button:hover {
+      background: #1d4ed8;
+    }
 
     #login-error {
       color: #dc2626;
@@ -92,7 +103,9 @@
     }
 
     /* ── DASHBOARD ── */
-    #dashboard { display: none; }
+    #dashboard {
+      display: none;
+    }
 
     header {
       background: #fff;
@@ -113,7 +126,9 @@
       color: #2563eb;
     }
 
-    .header-logo span { color: #1a202c; }
+    .header-logo span {
+      color: #1a202c;
+    }
 
     .header-right {
       display: flex;
@@ -141,9 +156,16 @@
       transition: all 0.2s;
     }
 
-    .btn-logout:hover { border-color: #dc2626; color: #dc2626; }
+    .btn-logout:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
 
-    main { padding: 28px 32px; max-width: 1280px; margin: 0 auto; }
+    main {
+      padding: 28px 32px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
 
     .page-title {
       font-size: 1.3rem;
@@ -188,10 +210,21 @@
       color: #1a202c;
     }
 
-    .stat-card.blue  .value { color: #2563eb; }
-    .stat-card.red   .value { color: #dc2626; }
-    .stat-card.amber .value { color: #d97706; }
-    .stat-card.green .value { color: #16a34a; }
+    .stat-card.blue .value {
+      color: #2563eb;
+    }
+
+    .stat-card.red .value {
+      color: #dc2626;
+    }
+
+    .stat-card.amber .value {
+      color: #d97706;
+    }
+
+    .stat-card.green .value {
+      color: #16a34a;
+    }
 
     /* ── CHARTS ── */
     .chart-grid {
@@ -215,7 +248,9 @@
       margin-bottom: 18px;
     }
 
-    .chart-card canvas { max-height: 220px; }
+    .chart-card canvas {
+      max-height: 220px;
+    }
 
     /* ── LOGS TABLE ── */
     .table-card {
@@ -244,7 +279,10 @@
       color: #64748b;
     }
 
-    table { width: 100%; border-collapse: collapse; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
 
     th {
       background: #f8fafc;
@@ -265,8 +303,13 @@
       border-bottom: 1px solid #f1f5f9;
     }
 
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fafc; }
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
 
     .badge {
       display: inline-block;
@@ -276,10 +319,25 @@
       font-weight: 600;
     }
 
-    .badge-waf    { background: #fef2f2; color: #dc2626; }
-    .badge-rate   { background: #fffbeb; color: #d97706; }
-    .badge-login  { background: #fff7ed; color: #ea580c; }
-    .badge-other  { background: #f0f9ff; color: #0284c7; }
+    .badge-waf {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .badge-rate {
+      background: #fffbeb;
+      color: #d97706;
+    }
+
+    .badge-login {
+      background: #fff7ed;
+      color: #ea580c;
+    }
+
+    .badge-other {
+      background: #f0f9ff;
+      color: #0284c7;
+    }
 
     .count-badge {
       display: inline-block;
@@ -300,297 +358,298 @@
     }
   </style>
 </head>
+
 <body>
 
-<!-- ══ LOGIN SCREEN ══ -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="logo">Sentinel <span>Gateway</span></div>
-    <div class="subtitle">Admin Dashboard — sign in to continue</div>
-    <label for="username">Username</label>
-    <input type="text" id="username" placeholder="admin" autocomplete="username" />
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
-    <button onclick="handleLogin()">Sign In</button>
-    <div id="login-error">Invalid credentials or insufficient permissions.</div>
+  <!-- ══ LOGIN SCREEN ══ -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="logo">Sentinel <span>Gateway</span></div>
+      <div class="subtitle">Admin Dashboard — sign in to continue</div>
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="admin" autocomplete="username" />
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+      <button onclick="handleLogin()">Sign In</button>
+      <div id="login-error">Invalid credentials or insufficient permissions.</div>
+    </div>
   </div>
-</div>
 
-<!-- ══ DASHBOARD ══ -->
-<div id="dashboard">
-  <header>
-    <div class="header-logo">Sentinel <span>Gateway</span></div>
-    <div class="header-right">
-      <div class="user-badge" id="user-label">Admin</div>
-      <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
-    </div>
-  </header>
-
-  <main>
-    <div class="page-title">Security Overview</div>
-    <div class="page-subtitle" id="last-updated">Loading…</div>
-
-    <!-- Stat Cards -->
-    <div class="stat-grid">
-      <div class="stat-card blue">
-        <div class="label">Total Events</div>
-        <div class="value" id="stat-total">—</div>
+  <!-- ══ DASHBOARD ══ -->
+  <div id="dashboard">
+    <header>
+      <div class="header-logo">Sentinel <span>Gateway</span></div>
+      <div class="header-right">
+        <div class="user-badge" id="user-label">Admin</div>
+        <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
       </div>
-      <div class="stat-card red">
-        <div class="label">WAF Blocks</div>
-        <div class="value" id="stat-waf">—</div>
+    </header>
+
+    <main>
+      <div class="page-title">Security Overview</div>
+      <div class="page-subtitle" id="last-updated">Loading…</div>
+
+      <!-- Stat Cards -->
+      <div class="stat-grid">
+        <div class="stat-card blue">
+          <div class="label">Total Events</div>
+          <div class="value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card red">
+          <div class="label">WAF Blocks</div>
+          <div class="value" id="stat-waf">—</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="label">Rate Limited</div>
+          <div class="value" id="stat-rate">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Failed Logins</div>
+          <div class="value" id="stat-login">—</div>
+        </div>
       </div>
-      <div class="stat-card amber">
-        <div class="label">Rate Limited</div>
-        <div class="value" id="stat-rate">—</div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Event Distribution</h3>
+          <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Events per Hour (last 24 hours)</h3>
+          <canvas id="lineChart"></canvas>
+        </div>
       </div>
-      <div class="stat-card green">
-        <div class="label">Failed Logins</div>
-        <div class="value" id="stat-login">—</div>
+
+      <!-- Logs Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Security Log</h3>
+          <span class="refresh-badge">Auto-refreshes every 30s</span>
+        </div>
+        <div id="table-container">
+          <div id="no-logs">Loading security events…</div>
+        </div>
       </div>
-    </div>
+    </main>
+  </div>
 
-    <!-- Charts -->
-    <div class="chart-grid">
-      <div class="chart-card">
-        <h3>Event Distribution</h3>
-        <canvas id="pieChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3>Events per Minute (last 30 min)</h3>
-        <canvas id="lineChart"></canvas>
-      </div>
-    </div>
+  <script>
+    const GATEWAY = 'http://localhost:8000';
+    let pieChart = null;
+    let lineChart = null;
 
-    <!-- Logs Table -->
-    <div class="table-card">
-      <div class="table-header">
-        <h3>Security Log</h3>
-        <span class="refresh-badge">Auto-refreshes every 30s</span>
-      </div>
-      <div id="table-container">
-        <div id="no-logs">Loading security events…</div>
-      </div>
-    </div>
-  </main>
-</div>
+    /* ── AUTH ── */
+    async function handleLogin() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      document.getElementById('login-error').style.display = 'none';
 
-<script>
-  const GATEWAY = 'http://localhost:8000';
-  let pieChart = null;
-  let lineChart = null;
-
-  /* ── AUTH ── */
-  async function handleLogin() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    document.getElementById('login-error').style.display = 'none';
-
-    try {
-      const res = await fetch(`${GATEWAY}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.detail || 'Login failed');
-      if (data.role !== 'Admin') throw new Error('Admin access only');
-
-      localStorage.setItem('sentinel_token', data.access_token);
-      localStorage.setItem('sentinel_user', username);
-      showDashboard();
-    } catch (err) {
-      document.getElementById('login-error').textContent = err.message;
-      document.getElementById('login-error').style.display = 'block';
-    }
-  }
-
-  async function handleLogout() {
-    const token = localStorage.getItem('sentinel_token');
-    if (token) {
       try {
-        await fetch(`${GATEWAY}/logout`, {
+        const res = await fetch(`${GATEWAY}/login`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+        if (data.role !== 'Admin') throw new Error('Admin access only');
+
+        localStorage.setItem('sentinel_token', data.access_token);
+        localStorage.setItem('sentinel_user', username);
+        showDashboard();
+      } catch (err) {
+        document.getElementById('login-error').textContent = err.message;
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }
+
+    async function handleLogout() {
+      const token = localStorage.getItem('sentinel_token');
+      if (token) {
+        try {
+          await fetch(`${GATEWAY}/logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (_) { } // still clear local state even if request fails
+      }
+      localStorage.removeItem('sentinel_token');
+      localStorage.removeItem('sentinel_user');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+
+    /* ── INIT ── */
+    window.onload = () => {
+      const token = localStorage.getItem('sentinel_token');
+      if (token) { showDashboard(); }
+    };
+
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      const user = localStorage.getItem('sentinel_user') || 'Admin';
+      document.getElementById('user-label').textContent = user;
+      fetchLogs();
+      setInterval(fetchLogs, 30000);
+    }
+
+    /* ── FETCH LOGS ── */
+    async function fetchLogs() {
+      const token = localStorage.getItem('sentinel_token');
+      try {
+        const res = await fetch(`${GATEWAY}/admin/logs`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-      } catch (_) {} // still clear local state even if request fails
-    }
-    localStorage.removeItem('sentinel_token');
-    localStorage.removeItem('sentinel_user');
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-  }
-
-  /* ── INIT ── */
-  window.onload = () => {
-    const token = localStorage.getItem('sentinel_token');
-    if (token) { showDashboard(); }
-  };
-
-  function showDashboard() {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    const user = localStorage.getItem('sentinel_user') || 'Admin';
-    document.getElementById('user-label').textContent = user;
-    fetchLogs();
-    setInterval(fetchLogs, 30000);
-  }
-
-  /* ── FETCH LOGS ── */
-  async function fetchLogs() {
-    const token = localStorage.getItem('sentinel_token');
-    try {
-      const res = await fetch(`${GATEWAY}/admin/logs`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.status === 401 || res.status === 403) { handleLogout(); return; }
-      const data = await res.json();
-      renderDashboard(data.logs || []);
-      document.getElementById('last-updated').textContent =
-        `Last updated: ${new Date().toLocaleTimeString()}`;
-    } catch {
-      document.getElementById('last-updated').textContent = 'Failed to fetch data.';
-    }
-  }
-
-  /* ── RENDER ── */
-  function renderDashboard(logs) {
-    // --- Stats ---
-    const wafCount   = logs.filter(l => l.event_type === 'WAF_BLOCK').length;
-    const rateCount  = logs.filter(l => l.event_type === 'Rate_Limit').length;
-    const loginCount = logs.filter(l => l.event_type === 'Failed_Login').length;
-
-    document.getElementById('stat-total').textContent = logs.length;
-    document.getElementById('stat-waf').textContent   = wafCount;
-    document.getElementById('stat-rate').textContent  = rateCount;
-    document.getElementById('stat-login').textContent = loginCount;
-
-    // --- Pie chart ---
-    const pieData = [wafCount, rateCount, loginCount, logs.length - wafCount - rateCount - loginCount];
-    if (pieChart) {
-      pieChart.data.datasets[0].data = pieData;
-      pieChart.update();
-    } else {
-      pieChart = new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['WAF Block', 'Rate Limited', 'Failed Login', 'Other'],
-          datasets: [{
-            data: pieData,
-            backgroundColor: ['#fca5a5', '#fcd34d', '#fdba74', '#93c5fd'],
-            borderColor: ['#dc2626', '#d97706', '#ea580c', '#2563eb'],
-            borderWidth: 1.5
-          }]
-        },
-        options: {
-          plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } },
-          cutout: '65%'
-        }
-      });
-    }
-
-    // --- Line chart (events per minute, last 30 min) ---
-    const now = new Date();
-    const buckets = {};
-    for (let i = 29; i >= 0; i--) {
-      const t = new Date(now - i * 60000);
-      const key = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
-      buckets[key] = 0;
-    }
-    logs.forEach(log => {
-      if (!log.timestamp) return;
-      const d = new Date(log.timestamp);
-      const key = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-      if (key in buckets) buckets[key]++;
-    });
-
-    const labels = Object.keys(buckets);
-    const values = Object.values(buckets);
-    const maxVal = Math.max(...values, 0);
-
-    if (lineChart) {
-      lineChart.data.labels = labels;
-      lineChart.data.datasets[0].data = values;
-      lineChart.options.scales.y.max = maxVal + 1;
-      lineChart.update();
-    } else {
-      lineChart = new Chart(document.getElementById('lineChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Events/min',
-            data: values,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37,99,235,0.08)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 3,
-            pointBackgroundColor: '#2563eb'
-          }]
-        },
-        options: {
-          scales: {
-            x: { ticks: { maxTicksLimit: 10, font: { size: 11 } } },
-            y: { beginAtZero: true, max: maxVal + 1, ticks: { stepSize: 1, font: { size: 11 } } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    // --- Table (group Rate_Limit by IP) ---
-    const rateLimitGroups = {};
-    const otherLogs = [];
-
-    logs.forEach(log => {
-      if (log.event_type === 'Rate_Limit') {
-        const ip = log.source_ip;
-        if (!rateLimitGroups[ip]) {
-          rateLimitGroups[ip] = { ...log, count: 1 };
-        } else {
-          rateLimitGroups[ip].count++;
-          // Keep the most recent timestamp
-          if (new Date(log.timestamp) > new Date(rateLimitGroups[ip].timestamp)) {
-            rateLimitGroups[ip].timestamp = log.timestamp;
-          }
-        }
-      } else {
-        otherLogs.push(log);
+        if (res.status === 401 || res.status === 403) { handleLogout(); return; }
+        const data = await res.json();
+        renderDashboard(data.logs || []);
+        document.getElementById('last-updated').textContent =
+          `Last updated: ${new Date().toLocaleTimeString()}`;
+      } catch {
+        document.getElementById('last-updated').textContent = 'Failed to fetch data.';
       }
-    });
-
-    const allRows = [
-      ...Object.values(rateLimitGroups),
-      ...otherLogs
-    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    if (allRows.length === 0) {
-      document.getElementById('table-container').innerHTML =
-        '<div id="no-logs">No security events recorded yet.</div>';
-      return;
     }
 
-    const rows = allRows.map(log => {
-      const badgeClass =
-        log.event_type === 'WAF_BLOCK'    ? 'badge-waf'   :
-        log.event_type === 'Rate_Limit'   ? 'badge-rate'  :
-        log.event_type === 'Failed_Login' ? 'badge-login' : 'badge-other';
+    /* ── RENDER ── */
+    function renderDashboard(logs) {
+      // --- Stats ---
+      const wafCount = logs.filter(l => l.event_type === 'WAF_BLOCK').length;
+      const rateCount = logs.filter(l => l.event_type === 'Rate_Limit').length;
+      const loginCount = logs.filter(l => l.event_type === 'Failed_Login').length;
 
-      const countBadge = log.count > 1
-        ? `<span class="count-badge">${log.count} requests blocked</span>`
-        : '';
+      document.getElementById('stat-total').textContent = logs.length;
+      document.getElementById('stat-waf').textContent = wafCount;
+      document.getElementById('stat-rate').textContent = rateCount;
+      document.getElementById('stat-login').textContent = loginCount;
 
-      return `<tr>
+      // --- Pie chart ---
+      const pieData = [wafCount, rateCount, loginCount, logs.length - wafCount - rateCount - loginCount];
+      if (pieChart) {
+        pieChart.data.datasets[0].data = pieData;
+        pieChart.update();
+      } else {
+        pieChart = new Chart(document.getElementById('pieChart'), {
+          type: 'doughnut',
+          data: {
+            labels: ['WAF Block', 'Rate Limited', 'Failed Login', 'Other'],
+            datasets: [{
+              data: pieData,
+              backgroundColor: ['#fca5a5', '#fcd34d', '#fdba74', '#93c5fd'],
+              borderColor: ['#dc2626', '#d97706', '#ea580c', '#2563eb'],
+              borderWidth: 1.5
+            }]
+          },
+          options: {
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } },
+            cutout: '65%'
+          }
+        });
+      }
+
+      // --- Line chart (events per hour, last 24 hours) ---
+      const now = new Date();
+      const buckets = {};
+      for (let i = 23; i >= 0; i--) {
+        const t = new Date(now - i * 3600000);
+        const key = `${t.getMonth() + 1}/${t.getDate()} ${t.getHours().toString().padStart(2, '0')}:00`;
+        buckets[key] = 0;
+      }
+      logs.forEach(log => {
+        if (!log.timestamp) return;
+        const d = new Date(log.timestamp);
+        const key = `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:00`;
+        if (key in buckets) buckets[key]++;
+      });
+
+      const labels = Object.keys(buckets);
+      const values = Object.values(buckets);
+      const maxVal = Math.max(...values, 0);
+
+      if (lineChart) {
+        lineChart.data.labels = labels;
+        lineChart.data.datasets[0].data = values;
+        lineChart.options.scales.y.max = maxVal + 1;
+        lineChart.update();
+      } else {
+        lineChart = new Chart(document.getElementById('lineChart'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Events/hour',
+              data: values,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37,99,235,0.08)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              pointBackgroundColor: '#2563eb'
+            }]
+          },
+          options: {
+            scales: {
+              x: { ticks: { maxTicksLimit: 10, font: { size: 11 } } },
+              y: { beginAtZero: true, max: maxVal + 1, ticks: { stepSize: 1, font: { size: 11 } } }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // --- Table (group Rate_Limit by IP) ---
+      const rateLimitGroups = {};
+      const otherLogs = [];
+
+      logs.forEach(log => {
+        if (log.event_type === 'Rate_Limit') {
+          const ip = log.source_ip;
+          if (!rateLimitGroups[ip]) {
+            rateLimitGroups[ip] = { ...log, count: 1 };
+          } else {
+            rateLimitGroups[ip].count++;
+            // Keep the most recent timestamp
+            if (new Date(log.timestamp) > new Date(rateLimitGroups[ip].timestamp)) {
+              rateLimitGroups[ip].timestamp = log.timestamp;
+            }
+          }
+        } else {
+          otherLogs.push(log);
+        }
+      });
+
+      const allRows = [
+        ...Object.values(rateLimitGroups),
+        ...otherLogs
+      ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      if (allRows.length === 0) {
+        document.getElementById('table-container').innerHTML =
+          '<div id="no-logs">No security events recorded yet.</div>';
+        return;
+      }
+
+      const rows = allRows.map(log => {
+        const badgeClass =
+          log.event_type === 'WAF_BLOCK' ? 'badge-waf' :
+            log.event_type === 'Rate_Limit' ? 'badge-rate' :
+              log.event_type === 'Failed_Login' ? 'badge-login' : 'badge-other';
+
+        const countBadge = log.count > 1
+          ? `<span class="count-badge">${log.count} requests blocked</span>`
+          : '';
+
+        return `<tr>
         <td><span class="badge ${badgeClass}">${log.event_type}</span>${countBadge}</td>
         <td>${log.source_ip || '—'}</td>
         <td>${log.timestamp || '—'}</td>
         <td>${log.details || '—'}</td>
       </tr>`;
-    }).join('');
+      }).join('');
 
-    document.getElementById('table-container').innerHTML = `
+      document.getElementById('table-container').innerHTML = `
       <table>
         <thead>
           <tr>
@@ -602,14 +661,15 @@
         </thead>
         <tbody>${rows}</tbody>
       </table>`;
-  }
-
-  // Allow Enter key on login form
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
-      handleLogin();
     }
-  });
-</script>
+
+    // Allow Enter key on login form
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+        handleLogin();
+      }
+    });
+  </script>
 </body>
+
 </html>
