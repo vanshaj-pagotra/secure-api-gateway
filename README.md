@@ -9,7 +9,7 @@ A lightweight API gateway you can drop in front of any HTTP backend. It handles 
 Every request coming into your API passes through a five-stage pipeline before it ever reaches your backend:
 
 1. **Rate limiting** — blocks IPs that exceed your configured request threshold
-2. **WAF** — scans URLs and request bodies for SQL injection and XSS patterns (18 compiled regex rules)
+2. **WAF** — scans URLs and request bodies for SQL injection, XSS, and path traversal (29 compiled rules)
 3. **JWT validation** — rejects requests without a valid, non-expired, non-revoked token on protected routes
 4. **RBAC** — enforces that only `Admin`-role tokens can reach `/admin/*` paths
 5. **Proxy** — forwards clean requests to the correct backend service and returns the response
@@ -148,7 +148,7 @@ sentinel-gateway/
 ├── main.py           # FastAPI app, middleware pipeline, routes
 ├── auth.py           # JWT validation, RBAC, password hashing
 ├── proxy.py          # Path-based routing and request forwarding
-├── waf.py            # SQLi/XSS pattern detection
+├── waf.py            # SQLi, XSS, and path traversal detection with input normalization
 ├── rate_limiter.py   # IP-based request throttling
 ├── logger.py         # Security event logging
 ├── database.py       # MySQL connection handler
@@ -165,5 +165,5 @@ sentinel-gateway/
 ## Known limitations
 
 - **Rate limiter is in-memory** — counters reset on server restart. Fine for most use cases; swap the store for Redis if you need persistence across restarts.
-- **WAF uses regex patterns** — effective against common attacks but not a replacement for a dedicated WAF engine. The pattern list in `waf.py` can be extended without touching anything else.
+- **WAF uses regex patterns** — covers SQLi, XSS, and path traversal with input normalization to resist encoding-based bypasses. Not a replacement for a dedicated WAF engine (e.g. ModSecurity), but the pattern list in `waf.py` can be extended without touching anything else.
 - **No request logging** — only security events (blocks, failures) are logged, not normal traffic. If you need full access logs, add that upstream with nginx or similar.
